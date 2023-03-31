@@ -3,8 +3,8 @@
 
 ## 사용법
 
-1. OpenAI API Key를 발급받습니다.
-2. OPENAI_API_KEY 환경변수를 등록합니다.
+1. [OpenAI API Key를 발급받습니다.](https://platform.openai.com/account/api-keys)
+2. [OPENAI_API_KEY 환경변수를 등록합니다.](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety)
 3. 패키지를 설치합니다.
 
     ````
