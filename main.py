@@ -97,6 +97,10 @@ def main():
     while True:
         my_word = app.listen()
         print('나: ' + my_word)
+        if my_word.strip() == 'Exit' or my_word.strip() == '종료':
+            print('프로그램을 종료합니다.')
+            break
+
         tutors_word = app.chat(my_word)
         app.speak(tutors_word)
 
