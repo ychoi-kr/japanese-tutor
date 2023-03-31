@@ -36,7 +36,10 @@ class ChatApp:
                 current_key = line[:2]
                 contents[current_key] = line[4:]
             elif not line.startswith("UNKNOWN:"):
-                contents[current_key] += ' ' + line.strip()
+                if current_key in contents:
+                    contents[current_key] += ' ' + line.strip()
+                else:
+                    contents[current_key] = line.strip()
             else:
                 current_key = "UNKNOWN"
                 contents[current_key] = line[9:].strip()
