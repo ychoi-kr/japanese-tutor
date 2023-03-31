@@ -22,6 +22,10 @@ class ChatApp:
             model="gpt-3.5-turbo",
             messages=self.messages
         )
+        
+        memory = 10
+        if len(self.messages) > memory:
+            self.messages = [self.messages[0]] + self.messages[1 - memory : -1]
         self.messages.append({"role": "assistant", "content": response["choices"][0]["message"].content})
         return self.extract_contents(response["choices"][0]["message"]["content"])
 
