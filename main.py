@@ -13,7 +13,7 @@ import playsound
 class ChatApp:
     def __init__(self):
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        self.format = "これは例です。 (이것은 예시입니다.)"
+        self.format = "今朝、新宿駅で友達に会いました。彼女は外国人で、日本語が上手です。 (오늘 아침, 신주쿠 역에서 친구를 만났습니다. 그녀는 외국인이며 일본어가 능숙합니다.)"
         self.messages = [
             {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 다음 형식으로 말씀해 주세요.\n\n---\n\n" + self.format + "\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
         ]
@@ -26,7 +26,7 @@ class ChatApp:
             messages=self.messages
         )
         
-        memory = 10
+        memory = 7 
         if len(self.messages) > memory:
             self.messages = [self.messages[0]] + self.messages[1 - memory : -1]
         self.messages.append({"role": "assistant", "content": response["choices"][0]["message"].content})
