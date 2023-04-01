@@ -1,3 +1,15 @@
+import re
+
+def split_text_by_brackets(text):
+    inside_brackets_pattern = r'\((.*?)\)'
+    outside_brackets_pattern = r'(.*?)(?=\()|(?<=\))(.*?)(?=\()|(?<=\))(.*?)'
+
+    inside_brackets = re.findall(inside_brackets_pattern, text)
+    outside_brackets = [match[0] or match[1] or match[2] for match in re.findall(outside_brackets_pattern, text)]
+
+    return ''.join(outside_brackets), ''.join(inside_brackets)
+
+
 def contains_japanese(text):
     for char in text:
         if ('\u3040' <= char <= '\u309F'  # Hiragana

@@ -13,8 +13,9 @@ import playsound
 class ChatApp:
     def __init__(self):
         openai.api_key = os.getenv("OPENAI_API_KEY")
+        self.format = "日本語(한국어)"
         self.messages = [
-            {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 항상 다음 형식에 따라 말씀해 주세요.\n\n---\n\n<일본어>(<일본어 문장을 한국어로 번역>)\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
+            {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 항상 다음과 같은 형식으로 말씀해 주세요.\n\n---\n\n" + self.format + "\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
         ]
 
 
@@ -39,7 +40,7 @@ class ChatApp:
     
         for line in lines:
             if '(' in line:
-                contents["JA"], contents["KO"] = line.rstrip(')').split('(')
+                contents["JA"], contents["KO"] = util.split_text_by_brackets(line)
             elif util.contains_japanese(line):
                 contents["JA"] = line
             elif util.contains_korean(line):
@@ -99,14 +100,28 @@ def main():
     app.speak(tutors_word)
 
     while True:
-        my_word = app.listen()
+        my_word = app.listen().strip()
         print('나: ' + my_word + '\n')
-        if my_word.strip() == 'Exit' or my_word.strip() == '종료':
+
+        if my_word == '무슨 말인지 모르겠어요' or my_word == '일본어로 말씀해주세요':
+            my_word = '방금 그 말을' + app.format + ' 형식으로 다시 말씀해 주시겠어요?'
+            print(my_word)
+        elif my_word == 'Exit' or my_word == '종료':
             print('프로그램을 종료합니다.')
             break
 
+        graceful_exit = False
+        if my_word == 'さようなら':
+            graceful_exit = True
+
         tutors_word = app.chat(my_word)
         app.speak(tutors_word)
+
+        if graceful_exit and 'JA' in tutors_word and (
+                'さようなら' in tutors_word['JA'] or 'またいつかお話しましょう' in tutors_word['JA']
+        ):
+            print('프로그램을 종료합니다.')
+            break
 
 main()
 
