@@ -13,9 +13,9 @@ import playsound
 class ChatApp:
     def __init__(self):
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        self.format = "日本語(한국어)"
+        self.format = "これは例です。 (이것은 예시입니다.)"
         self.messages = [
-            {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 항상 다음과 같은 형식으로 말씀해 주세요.\n\n---\n\n" + self.format + "\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
+            {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 다음 형식으로 말씀해 주세요.\n\n---\n\n" + self.format + "\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
         ]
 
 
@@ -83,14 +83,15 @@ class ChatApp:
     
         with sr.Microphone(sample_rate=16000) as source:
             audio_model = whisper.load_model("base")
-            print("(말씀하세요)", end='\r')
+            prmpt = "(말씀하세요)"
+            print(prmpt, end='\r')
 
             audio = r.listen(source)
             audio_data = torch.from_numpy(np.frombuffer(audio.get_raw_data(), np.int16).flatten().astype(np.float32) / 32768.0)
             result = audio_model.transcribe(audio_data, fp16=False)
     
-            print(' ' * len("(말씀하세요)"), end='\r')
-            return result["text"]
+            print(' ' * (len(prmpt) + 3), end='\r')
+            return result["text"].ljust(len(prmpt))
 
 
 def main():
@@ -100,28 +101,26 @@ def main():
     app.speak(tutors_word)
 
     while True:
-        my_word = app.listen().strip()
+        my_word = app.listen().lstrip()
         print('나: ' + my_word + '\n')
 
-        if my_word == '무슨 말인지 모르겠어요' or my_word == '일본어로 말씀해주세요':
-            my_word = '방금 그 말을' + app.format + ' 형식으로 다시 말씀해 주시겠어요?'
-            print(my_word)
-        elif my_word == 'Exit' or my_word == '종료':
-            print('프로그램을 종료합니다.')
-            break
-
-        graceful_exit = False
-        if my_word == 'さようなら':
-            graceful_exit = True
+        graceful_exit = 0
+        if my_word.strip() == 'さようなら':
+            graceful_exit = 2
 
         tutors_word = app.chat(my_word)
         app.speak(tutors_word)
 
-        if graceful_exit and 'JA' in tutors_word and (
-                'さようなら' in tutors_word['JA'] or 'またいつかお話しましょう' in tutors_word['JA']
-        ):
-            print('프로그램을 종료합니다.')
-            break
+        s = ''.join([value for value in tutors_word.values()])
+        if graceful_exit:
+            graceful_exit -= 1
+            if (
+               'さようなら' in s or
+               'またいつかお話しましょう' in s or
+               'また今度お話しましょうね' in s
+            ):
+                print('프로그램을 종료합니다.')
+                break
 
 main()
 
