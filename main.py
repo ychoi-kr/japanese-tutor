@@ -1,3 +1,5 @@
+import util
+
 import speech_recognition as sr
 import whisper
 import os
@@ -12,7 +14,7 @@ class ChatApp:
     def __init__(self):
         openai.api_key = os.getenv("OPENAI_API_KEY")
         self.messages = [
-            {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 항상 다음 형식에 따라 말씀해 주세요.\n\n---\n\nJA:<일본어>\nKO: <일본어 문장을 한국어로 번역>\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
+            {"role": "system", "content": "당신은 지금부터 일본어 선생님입니다. 저와 가벼운 대화를 하면서 자연스럽게 일본어를 익히도록 도와주세요. 항상 다음 형식에 따라 말씀해 주세요.\n\n---\n\n<일본어>(<일본어 문장을 한국어로 번역>)\n\n---\n\n먼저 인사를 건네고, 일상적인 질문으로 대화를 이끌어 주세요."},
         ]
 
 
@@ -33,20 +35,17 @@ class ChatApp:
     def extract_contents(self, text):
         lines = text.strip().split('\n')
         contents = {}
-        current_key = "UNKNOWN"
+        current_key = "UNK"
     
         for line in lines:
-            if line.startswith("JA:") or line.startswith("KO:"):
-                current_key = line[:2]
-                contents[current_key] = line[4:]
-            elif not line.startswith("UNKNOWN:"):
-                if current_key in contents:
-                    contents[current_key] += ' ' + line.strip()
-                else:
-                    contents[current_key] = line.strip()
+            if '(' in line:
+                contents["JA"], contents["KO"] = line.rstrip(')').split('(')
+            elif util.contains_japanese(line):
+                contents["JA"] = line
+            elif util.contains_korean(line):
+                contents["KO"] = line
             else:
-                current_key = "UNKNOWN"
-                contents[current_key] = line[9:].strip()
+                contents["UNK"] = line
     
         return contents
 
@@ -59,32 +58,37 @@ class ChatApp:
             playsound.playsound(filename)
             os.remove(filename)
         
-        if 'JA' in answer:
-            print('先生: ' + answer['JA'])
+        if 'JA' in answer and 'KO' in answer:
+            print(f"先生: {answer['JA']} (선생님: {answer['KO']})")
             play(answer['JA'], 'ja')
-        if 'KO' in answer:
+        elif 'JA' in answer:
+            print(f"先生: {answer['JA']}")
+            play(answer['JA'], 'ja')
+        elif 'KO' in answer:
             print('선생님: ' + answer['KO'])
-            if 'JA' not in answer:
-                play(answer['KO'], 'ko')
-        if 'UNKNOWN' in answer:
-            print('선생님: ' + answer['UNKNOWN'])
+        elif 'UNK' in answer:
+            print('선생님: ' + answer['UNK'])
+        else:
+            pass
+
         print('')
     
     
     def listen(self):
         r = sr.Recognizer()
         r.energy_threshold = 300
-        r.pause_threshold = 0.8
+        r.pause_threshold = 1.8 
         r.dynamic_energy_threshold = False
     
         with sr.Microphone(sample_rate=16000) as source:
             audio_model = whisper.load_model("base")
-            print("(말씀하세요)")
+            print("(말씀하세요)", end='\r')
 
             audio = r.listen(source)
             audio_data = torch.from_numpy(np.frombuffer(audio.get_raw_data(), np.int16).flatten().astype(np.float32) / 32768.0)
             result = audio_model.transcribe(audio_data, fp16=False)
     
+            print(' ' * len("(말씀하세요)"), end='\r')
             return result["text"]
 
 
@@ -96,7 +100,7 @@ def main():
 
     while True:
         my_word = app.listen()
-        print('나: ' + my_word)
+        print('나: ' + my_word + '\n')
         if my_word.strip() == 'Exit' or my_word.strip() == '종료':
             print('프로그램을 종료합니다.')
             break
