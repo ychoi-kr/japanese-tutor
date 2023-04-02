@@ -92,7 +92,7 @@ def main():
         print('나: ' + my_word + '\n')
 
         graceful_exit = 0
-        if re.search('さようなら|おやすみなさい', my_word):
+        if re.search('さようなら|おやすみなさい|お休みなさい', my_word):
             graceful_exit = 2
 
         tutors_word = app.chat(my_word)
@@ -102,7 +102,7 @@ def main():
 
         if graceful_exit:
             graceful_exit -= 1
-            if re.search('さようなら|またいつかお話しましょう|また今度お話しましょうね|おやすみなさい', tutors_word):
+            if re.search('さようなら|またいつかお話しましょう|また今度お話しましょうね|おやすみなさい|お休みなさい', tutors_word):
                 print('프로그램을 종료합니다.')
                 break
 
